@@ -6,6 +6,9 @@ For the last two weeks of my time at the tech academy, I worked with my peers in
 Below are descriptions of the stories I worked on, along with code snippets and navigation links. Some of the full code files I worked on are in this repo.
 
 ## Back End Stories
+[Menu Application Addition](#menu-application-addition)
+[Cafe Review](#cafe-review)
+[Suntracker API Upgrade](#suntracker-api-upgrade)
 
 ### Menu Application Addition
 The project had an existing restaurant menu application that allowed for the creation of new menu items. The story was to create a way to obtain and display recipe inspiration for new menu items. I wanted to allow the user to search for recipes based on ingredient, so I found an appropriate API that would return the data required by the story and used the users input as a parameter in the API.
