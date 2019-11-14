@@ -6,8 +6,8 @@ For the last two weeks of my time at the tech academy, I worked with my peers in
 Below are descriptions of the stories I worked on, along with code snippets and navigation links. Some of the full code files I worked on are in this repo.
 
 ## Back End Stories
-[Menu Application Addition](#menu-application-addition)
-[Cafe Review](#cafe-review)
+[Menu Application Addition](#menu-application-addition) | 
+[Cafe Review](#cafe-review) | 
 [Suntracker API Upgrade](#suntracker-api-upgrade)
 
 ### Menu Application Addition
@@ -126,11 +126,88 @@ The drink data contained up to 10 ingredients, however not all the recipes had 1
 This story gave me experience researching to find the correct API for the task given to me as well as using user input as part of the API to influence the response data. Tackling the ingredient display problem gave me practice using Django Template Language to perform logic in the template.
 
 ### Cafe Review
+The project had a cafe application and I was tasked with allowing the user to create a new review of the cafe and display any previous reviews. I used Django Form and Model classes to accomplish the story objectives. I first created a Model class for a review along with relevant fields.
 
+    class Review(models.Model):
+        RATING_CHOICES = {
+            (1, '1'),
+            (2, '2'),
+            (3, '3'),
+            (4, '4'),
+            (5, '5'),
+        }
+        date_visited = models.DateField(null=True)
+        date = models.DateTimeField(auto_now_add=True)
+        name = models.CharField(max_length=100)
+        comment = models.TextField(max_length=1000)
+        rating = models.IntegerField(choices=RATING_CHOICES)
+        objects = models.Manager()
 
+I then created a ModelForm class to allow the user to write a review and update the Review table in the database. I included the fields from the Model that I wanted the user to be able to edit. 
+
+    class ReviewForm(ModelForm):
+
+        class Meta:
+            model = Review
+            fields = ('name', 'date_visited', 'comment', 'rating')
+
+I wrote a method for creating a review and as well as one for displaying any previous reviews.
+
+    def review(request):
+    context = {'reviews': Review.objects}
+    return render(request, 'cafe/review.html', context)
+
+    def leave_review(request):
+        if request.method == "POST":
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                review = form.save(commit=False)
+                review.save()
+                return HttpResponseRedirect('/cafe/review/')
+        else:
+            form = ReviewForm()
+        return render(request, 'cafe/leave_review.html', {'form': form})
+        
+I formatted the review.html and leave_review.html pages to enable the user to easily fill out the review form as well as view previous reviews. 
+
+I gained knowledge and practice utilizing a database in a Django application. I was able to sucessfully create a Model class with appropriate attributes and then use a ModelForm based off that Model to update the database. The skills I developed while completing this story gave me a better understanding of how a Django web application interacts with a database. 
 
 ### Suntracker API Upgrade
+The project had an existing application that used an API obtain sunrise and sunset times for the users location based on their IP address. The story asked to replace the existing API with a new one that would obtain moon data along with sun data. I researched the API documentation and determined the parameters needed were latitude, longitude, date, and timezone. There was an existing method for obtaining the users latitude, longitude, and timezone. However, the timezone format that the method returned was a string name of the timezone, while the API required the timezone parameter to be the UTC offset integer for the timezone. I used the pytz module to correctly format the timezone for the API. I used the data in the JSON API response to create a dictionary containing the data I wanted to display to the user. The times needed formatting from 24 hour time to 12 hour time, so I created a for loop to format each time in the dictionary correctly.
 
+    def suntracker(location):
+        #API:
+        url = 'https://api.solunar.org/solunar/{},{},{},{}'
+        # Format date for API and get latitude and longitude data from User_LatLon() method
+        suntracker_date = datetime.today().strftime('%Y%m%d')
+        Latitude, Longitude, timezone  = User_LatLon()
+        # Get timezone and format it appropriately for API
+        suntracker_tz = datetime.now(pytz.timezone(timezone)).strftime('%z')
+        suntracker_tz = int(str(suntracker_tz)[:-2])
+        # Format API with variables and converts returned Json data to dictionary
+        end_point_url = url.format(Latitude, Longitude, suntracker_date, suntracker_tz)
+        sun_data_json = requests.get(end_point_url).text
+        sun_data = json.loads(sun_data_json)
+        #Construct a new dictionary of needed data
+        solunar_data = {
+                'sunrise' : sun_data['sunRise'],
+                'sunset' : sun_data['sunSet'],
+                'moonrise' : sun_data['moonRise'],
+                'moonset' : sun_data['moonSet'],
+                'moonphase' : sun_data['moonPhase'],
+            }
+        # Format the displayed times for sunrise, sunset, moonrise, and moonset
+        counter = 0
+        for key in solunar_data:
+            solunar_data[key] = ((datetime.strptime(solunar_data[key], "%H:%M")).strftime("%I:%M %p")).strip("0")
+            counter += 1
+            if counter == 4:
+                break
+
+        context = {'Location': location, 'solunar_data': solunar_data }
+        return context
+
+This story gave me good experience looking over existing code to determine how it was functioning, and then making the changes required to fulful the story requirements. I was able to make updates to existing code without breaking other parts of the application.
 
 
 ## Other Skills Learned
